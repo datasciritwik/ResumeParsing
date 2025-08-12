@@ -1,19 +1,1 @@
-[project]
-name = "resumeparsing"
-version = "0.1.0"
-description = "Add your description here"
-readme = "README.md"
-requires-python = ">=3.12"
-dependencies = [
-    "en-core-web-sm",
-    "numpy>=1.24,<2.0",
-    "pdfplumber>=0.11.7",
-    "pydantic[email]>=2.11.7",
-    "pymupdf>=1.26.3",
-    "python-multipart>=0.0.20",
-    "spacy>=3.7.2,<3.8.0",
-]
 
-[tool.uv.sources]
-en-core-web-sm = { url = "https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.7.1/en_core_web_sm-3.7.1-py3-none-any.whl" }
-en-core-web-md = { url = "https://github.com/explosion/spacy-models/releases/download/en_core_web_md-3.7.1/en_core_web_md-3.7.1-py3-none-any.whl" }
