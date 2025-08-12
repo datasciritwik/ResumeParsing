@@ -65,6 +65,7 @@ pydantic_core==2.33.2
 Pygments==2.19.2
 PyMuPDF==1.26.3
 pyparsing==3.2.3
+python-multipart==0.0.20
 PyYAML==6.0.2
 RapidFuzz==3.13.0
 regex==2025.7.34
