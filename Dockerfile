@@ -17,7 +17,7 @@ WORKDIR /app
 RUN pip install --upgrade pip
 # Install Python dependencies first (for build caching)
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt --root-user-action
+RUN pip install --no-cache-dir -r requirements.txt
 
 # Download all required data/models in one layer
 RUN python -m nltk.downloader wordnet omw-1.4 \
