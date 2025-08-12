@@ -1,19 +1,21 @@
-FROM python:3.12-slim as base
+FROM python:3.12-slim AS base
 
 # Prevent interactive prompts & set up cache dirs
 ENV DEBIAN_FRONTEND=noninteractive \
-    PIP_NO_CACHE_DIR=true \
-    PYTHONUNBUFFERED=1
+    PYTHONUNBUFFERED=1 \
+    TRANSFORMERS_CACHE=/app/models \
+    HF_HOME=/app/models \
+    NLTK_DATA=/app/nltk_data
 
 # Install only necessary system packages
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     git \
-    && rm -rf /var/lib/apt/lists/*
+ && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
-# Install Python dependencies first (use requirements for caching)
+# Install Python dependencies first (for build caching)
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
@@ -22,11 +24,9 @@ RUN python -m nltk.downloader wordnet omw-1.4 \
  && python -m spacy download en_core_web_sm \
  && python -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('all-MiniLM-L6-v2')"
 
+# Copy only necessary files (avoid copying .git, venv, __pycache__)
 COPY . .
 
-# CMD ["python", "main.py"]
-
-# ---------- EXTRA ----------
 # Expose FastAPI port
 EXPOSE 8000
 
