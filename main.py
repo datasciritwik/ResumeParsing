@@ -5,6 +5,7 @@ from contextlib import asynccontextmanager
 import nltk
 
 from app.methods.old import calculate_enhanced_ats_score, generate_improvement_suggestions
+from app.methods.new import LLMATSCalculator
 
 @asynccontextmanager
 async def lifespan(app:FastAPI):
@@ -47,4 +48,19 @@ async def calculate_ats(resume: UploadFile = File(...), jd: UploadFile = File(..
     return JSONResponse({
         "ats_results": results,
         "suggestions": suggestions
+    })
+
+@app.post("/new/ats")
+async def calculate_ats(resume: UploadFile = File(...), jd: UploadFile = File(...)):
+    # Validate file extensions
+    if not resume.filename.endswith(".txt") or not jd.filename.endswith(".txt"):
+        raise HTTPException(status_code=400, detail="Only .txt files are supported")
+    
+    resume_text = (await resume.read()).decode("utf-8", errors="ignore")
+    jd_text = (await jd.read()).decode("utf-8", errors="ignore")
+    cal_ats = LLMATSCalculator()
+    out = cal_ats.run_analysis(jd_text, resume_text)
+
+    return JSONResponse({
+        "output_data": out
     })
