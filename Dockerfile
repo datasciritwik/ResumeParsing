@@ -4,7 +4,10 @@ FROM python:3.12-slim AS builder
 ENV DEBIAN_FRONTEND=noninteractive \
     PYTHONUNBUFFERED=1 \
     PIP_NO_CACHE_DIR=1 \
-    PIP_DISABLE_PIP_VERSION_CHECK=1
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    TRANSFORMERS_CACHE=/app/models \
+    HF_HOME=/app/models \
+    NLTK_DATA=/app/nltk_data
 
 # Install build dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -14,14 +17,19 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 WORKDIR /app
 
+# Create directories for models and data
+RUN mkdir -p /app/models /app/nltk_data
+
 # Install Python dependencies
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Download models and data
-RUN python -m nltk.downloader wordnet omw-1.4 \
+# Download models and data to specific locations
+RUN python -m nltk.downloader -d /app/nltk_data wordnet omw-1.4 \
  && python -m spacy download en_core_web_sm \
- && python -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('all-MiniLM-L6-v2')"
+ && python -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('all-MiniLM-L6-v2')" \
+ && ls -la /app/models \
+ && ls -la /app/nltk_data
 
 # Production stage - clean slate
 FROM python:3.12-slim AS production
@@ -41,13 +49,20 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 WORKDIR /app
 
+# Create directories for models and data
+RUN mkdir -p /app/models /app/nltk_data
+
 # Copy installed packages from builder stage
 COPY --from=builder /usr/local/lib/python3.12/site-packages /usr/local/lib/python3.12/site-packages
 COPY --from=builder /usr/local/bin /usr/local/bin
+
+# Copy models and data (these paths should now exist)
 COPY --from=builder /app/models /app/models
 COPY --from=builder /app/nltk_data /app/nltk_data
 
-# Create .dockerignore to exclude unnecessary files
+# Copy spaCy models from their default location
+COPY --from=builder /usr/local/lib/python3.12/site-packages/en_core_web_sm /usr/local/lib/python3.12/site-packages/en_core_web_sm
+
 # Copy only application code (make sure you have a .dockerignore)
 COPY main.py .
 COPY requirements.txt .
