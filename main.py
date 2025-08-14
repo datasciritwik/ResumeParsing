@@ -1,23 +1,27 @@
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi import FastAPI, UploadFile, File, HTTPException
+from fastapi import FastAPI, UploadFile, File, HTTPException, Header
 from fastapi.responses import JSONResponse
 from contextlib import asynccontextmanager
-import nltk
-
+form nltk import data, download
+import os
 from app.methods.old import calculate_enhanced_ats_score, generate_improvement_suggestions
 from app.methods.new import LLMATSCalculator
+
+from dotenv import load_dotenv
+load_dotenv()
+header = os.getenv('API_HEADER')
 
 @asynccontextmanager
 async def lifespan(app:FastAPI):
     try:
-        nltk.data.find('corpora/wordnet')
+        data.find('corpora/wordnet')
     except LookupError:
-        nltk.download('wordnet')
+        download('wordnet')
 
     try:
-        nltk.data.find('corpora/omw-1.4')
+        data.find('corpora/omw-1.4')
     except LookupError:
-        nltk.download('omw-1.4')
+        download('omw-1.4')
     yield
 
 
@@ -31,7 +35,9 @@ app.add_middleware(
 )
 
 @app.post("/old/ats")
-async def calculate_ats(resume: UploadFile = File(...), jd: UploadFile = File(...)):
+async def calculate_ats(resume: UploadFile = File(...), jd: UploadFile = File(...), x_api_header: str = Header(...)):
+    if x_api_header != header:
+        raise HTTPException(status_code=403, detail="Unauthorized access")
     # Validate file extensions
     if not resume.filename.endswith(".txt") or not jd.filename.endswith(".txt"):
         raise HTTPException(status_code=400, detail="Only .txt files are supported")
@@ -51,7 +57,9 @@ async def calculate_ats(resume: UploadFile = File(...), jd: UploadFile = File(..
     })
 
 @app.post("/new/ats")
-async def calculate_ats(resume: UploadFile = File(...), jd: UploadFile = File(...)):
+async def calculate_ats(resume: UploadFile = File(...), jd: UploadFile = File(...)x_api_header: str = Header(...)):
+    if x_api_header != header:
+        raise HTTPException(status_code=403, detail="Unauthorized access")
     # Validate file extensions
     if not resume.filename.endswith(".txt") or not jd.filename.endswith(".txt"):
         raise HTTPException(status_code=400, detail="Only .txt files are supported")
